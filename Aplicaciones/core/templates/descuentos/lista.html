@@ -1,0 +1,107 @@
+{% extends 'layouts/baseAdmin.html' %}
+
+{% block title %}Lista de Descuentos{% endblock %}
+
+{% block content %}
+<h2>Descuentos</h2>
+
+<a href="{% url 'nuevo_descuento' %}" class="btn btn-success mb-3">Agregar Descuento</a>
+
+<table class="table table-striped" id="miTabla">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Producto</th>
+      <th>Porcentaje</th>
+      <th>Fecha inicio</th>
+      <th>Fecha fin</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for descuento in descuentos %}
+    <tr>
+      <td>{{ descuento.id }}</td>
+      <td>{{ descuento.producto.nombre }}</td>
+      <td>{{ descuento.porcentaje_descuento }}%</td>
+      <td>{{ descuento.fecha_inicio }}</td>
+      <td>{{ descuento.fecha_fin }}</td>
+      <td>
+        <a href=" {% url 'editar_descuento' descuento.id %} " class="btn btn-primary btn-sm">Editar</a>
+        <button onclick="eliminarDescuento('{{ descuento.id }}')" class="btn btn-danger btn-sm">Eliminar</button>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6">No hay descuentos registrados.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<script>
+function eliminarDescuento(id) {
+  if(confirm('¿Seguro que desea eliminar este descuento?')) {
+    fetch(`/api/descuentos/${id}/`, { method: 'DELETE', headers: {'X-CSRFToken': getCookie('csrftoken')} })
+    .then(res => {
+      if(res.ok) {
+        alert('Descuento eliminado');
+        location.reload();
+      } else {
+        alert('No se pudo eliminar el descuento');
+      }
+    })
+    .catch(() => alert('Error al eliminar'));
+  }
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if(document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for(let cookie of cookies) {
+      cookie = cookie.trim();
+      if(cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+</script>
+
+
+
+<script>
+$(document).ready(function() {
+  $('#miTabla').DataTable({
+    language: {
+      url: 'https://cdn.datatables.net/plug-ins/2.3.1/i18n/es-ES.json'
+    },
+    dom: 'Bfrtip', // Botones arriba de la tabla
+    buttons: [
+      {
+        extend: 'copy',
+        text: 'Copiar'
+      },
+      {
+        extend: 'excel',
+        text: 'Excel'
+      },
+      {
+        extend: 'pdf',
+        text: 'PDF'
+      },
+      {
+        extend: 'print',
+        text: 'Imprimir'
+      }
+    ],
+    responsive: true,
+    pageLength: 10,
+    lengthMenu: [5, 10, 25, 50, 100]
+  });
+});
+</script>
+
+
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends 'layouts/baseAdmin.html' %}
+
+{% block title %}Editar Descuento{% endblock %}
+
+{% block content %}
+<h2>Editar Descuento</h2>
+
+<form method="POST" action="{% url 'editar_descuento' descuento.id %}" id="formDescuento">
+    {% csrf_token %}
+
+    <div class="mb-3">
+        <label for="producto" class="form-label">Producto</label>
+        <select id="producto" name="producto" class="form-control" disabled>
+            <option value="{{ descuento.producto.id }}" selected>{{ descuento.producto.nombre }}</option>
+        </select>
+        <!-- Hidden input para enviar el producto porque el select está deshabilitado -->
+        <input type="hidden" name="producto" value="{{ descuento.producto.id }}">
+    </div>
+
+    <div class="mb-3">
+        <label for="porcentaje_descuento" class="form-label">Porcentaje de Descuento (%)</label>
+        <input type="number" name="porcentaje_descuento" value="{{ porcentaje_entero }}" required>
+
+    </div>
+
+    <div class="mb-3">
+        <label for="fecha_inicio" class="form-label">Fecha de Inicio</label>
+        <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control" value="{{ descuento.fecha_inicio|date:'Y-m-d' }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label for="fecha_fin" class="form-label">Fecha de Fin</label>
+        <input type="date" name="fecha_fin" id="fecha_fin" class="form-control" value="{{ descuento.fecha_fin|date:'Y-m-d' }}" required>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+    <a href="{% url 'admin_descuentos' %}" class="btn btn-secondary">Cancelar</a>
+</form>
+
+
+<script>
+$(document).ready(function () {
+    // Método personalizado para validar que fecha_fin >= fecha_inicio
+    $.validator.addMethod("fechaMayorOIgual", function(value, element, params) {
+        const fechaInicio = new Date($(params).val());
+        const fechaFin = new Date(value);
+        return fechaFin >= fechaInicio;
+    }, "La fecha de fin debe ser posterior o igual a la fecha de inicio");
+
+    // Método para validar que fecha_inicio >= hoy
+    $.validator.addMethod("fechaDesdeHoy", function(value) {
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);  // eliminar hora
+        const fecha = new Date(value);
+        return fecha >= hoy;
+    }, "La fecha de inicio no puede ser menor a hoy");
+
+    $("#formDescuento").validate({
+        rules: {
+            producto: {
+                required: true
+            },
+            porcentaje_descuento: {
+                required: true,
+                number: true,
+                min: 0,
+                max: 100
+            },
+            fecha_inicio: {
+                required: true,
+                date: true,
+                fechaDesdeHoy: true
+            },
+            fecha_fin: {
+                required: true,
+                date: true,
+                fechaMayorOIgual: "#fecha_inicio"
+            }
+        },
+        messages: {
+            producto: {
+                required: "Debe seleccionar un producto"
+            },
+            porcentaje_descuento: {
+                required: "Ingrese un porcentaje",
+                number: "Debe ser un número válido",
+                min: "El porcentaje no puede ser menor a 0",
+                max: "El porcentaje no puede ser mayor a 100"
+            },
+            fecha_inicio: {
+                required: "Ingrese la fecha de inicio",
+                date: "Ingrese una fecha válida",
+                fechaDesdeHoy: "La fecha de inicio no puede ser menor a hoy"
+            },
+            fecha_fin: {
+                required: "Ingrese la fecha de fin",
+                date: "Ingrese una fecha válida",
+                fechaMayorOIgual: "La fecha de fin debe ser mayor o igual a la de inicio"
+            }
+        },
+        errorClass: "text-danger",
+        errorElement: "small",
+        errorPlacement: function(error, element) {
+            error.insertAfter(element);
+        }
+    });
+});
+</script>
+
+{% endblock %}

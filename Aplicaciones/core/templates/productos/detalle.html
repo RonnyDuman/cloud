@@ -1,0 +1,287 @@
+{% extends 'layouts/base.html' %}
+{% load descuentos_extras %}
+{% block title %}{{ producto.nombre }}{%endblock %} 
+
+
+{% block content %}
+<style>
+
+  .reseña-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    background-color: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  }
+
+  .reseña-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .reseña-usuario {
+    font-weight: bold;
+    font-size: 1.1rem;
+  }
+
+  .reseña-fecha {
+    color: #888;
+    font-size: 0.9rem;
+  }
+
+  .reseña-estrellas {
+    color: #ffc107;
+    margin-bottom: 0.5rem;
+  }
+
+  .reseña-comentario {
+    font-size: 1rem;
+    color: #333;
+  }
+
+  .form-reseña {
+    border: 1px solid #ccc;
+    padding: 1.5rem;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+  }
+
+  .detalle-contenedor {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin-top: 2rem;
+    background-color: #fff;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.08);
+  }
+
+  .detalle-imagen {
+    flex: 1;
+    max-width: 450px;
+  }
+
+  .detalle-imagen img {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 0 6px rgba(0,0,0,0.1);
+  }
+
+  .detalle-info {
+    flex: 2;
+  }
+
+  .precio-original {
+    text-decoration: line-through;
+    color: #999;
+  }
+
+  .precio-descuento {
+    color: #dc3545;
+    font-weight: bold;
+    font-size: 1.8rem;
+  }
+
+  .porcentaje-descuento {
+    background-color: #198754;
+    color: white;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.9rem;
+    border-radius: 5px;
+    margin-left: 0.5rem;
+  }
+
+  .disponibilidad {
+    margin-top: 1rem;
+    font-weight: bold;
+  }
+
+  .btn-float-carrito {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 999;
+    border-radius: 40px;
+    padding: 12px 20px;
+    font-size: 1rem;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  }
+
+  .ver-mas {
+    cursor: pointer;
+    color: #0d6efd;
+    text-decoration: underline;
+  }
+
+  .card-reseña {
+    margin-bottom: 1rem;
+  }
+
+  .scale{
+    scale: 1;
+    transition: scale 0.5s ease;
+  }
+  .scale:hover{
+    scale: 1.1;
+  }
+
+</style>
+
+<div class="detalle-contenedor">
+  <div class="detalle-imagen">
+    {% if producto.imagen %}
+    <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" />
+    {% else %}
+    <img
+      src="https://via.placeholder.com/400x400?text=Sin+imagen"
+      alt="Sin imagen"
+    />
+    {% endif %}
+  </div>
+
+  <div class="detalle-info">
+    <h1>{{ producto.nombre }}</h1>
+
+    <div class="precios">
+        {% if descuentos|dictkey:producto.id %}
+        {% with descuentos|dictkey:producto.id as desc %}
+                <span class="precio-original">${{ producto.precio|floatformat:2 }}</span>
+                <span class="precio-descuento">
+                ${{ producto.precio|descontar:desc.porcentaje_descuento }}
+                </span>
+                <span class="porcentaje-descuento">-{{ desc.porcentaje_descuento|floatformat:0 }}%</span>
+            {% endwith %}
+        {% else %}
+            <span class="precio-descuento">${{ producto.precio|floatformat:2 }}</span>
+        {% endif %}
+
+    </div>
+
+    <h3>Descripción</h3>
+    <p style="white-space: pre-line">{{ producto.descripcion }}</p>
+
+    <div
+      class="ver-mas"
+      onclick="this.style.display='none'; document.getElementById('descripcion-completa').style.display='block';"
+    >
+      Ver más
+    </div>
+    <div id="descripcion-completa" style="display: none; white-space: pre-line">
+      <!-- Aquí puedes poner una descripción más larga o detalles adicionales -->
+      {{ producto.descripcion_detallada|default:"No hay más información." }}
+    </div>
+
+    <div class="disponibilidad">
+        <p><b>Unidades existentes: </b>{{ producto.stock }} </p>
+
+    </div>
+  </div>
+
+  {% if producto_en_carrito %}
+    <div class="btn-float-carrito btn btn-secondary disabled">
+      Ya está en el carrito
+    </div>
+  {% else %}
+    <form method="post" action="{% url 'agregar_al_carrito' producto.id %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-success btn-float-carrito scale">
+        <i class="fas fa-cart-plus"></i> Agregar al carrito
+      </button>
+    </form>
+{% endif %}
+
+</div>
+
+
+<h3 class="mt-5">Reseñas</h3>
+
+{% if reseñas %}
+  {% for reseña in reseñas %}
+    <div class="reseña-card">
+      <div class="reseña-header">
+        <span class="reseña-usuario"><i class="fas fa-user-circle text-secondary me-2"></i> {{ reseña.usuario.nombre }}</span>
+        <span class="reseña-fecha">{{ reseña.fecha|date:"d M Y H:i" }}</span>
+      </div>
+
+      <div class="reseña-estrellas">
+        {% for i in rango_estrellas %}
+          {% if i <= reseña.calificacion %}
+            <span>&#9733;</span>
+          {% else %}
+            <span class="text-muted">&#9734;</span>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <p class="reseña-comentario">{{ reseña.comentario|linebreaksbr }}</p>
+    </div>
+  {% endfor %}
+{% else %}
+  <p class="text-muted">No hay reseñas aún.</p>
+{% endif %}
+
+
+{% if request.session.usuario_id %}
+  <h4 class="mt-5">Deja tu reseña</h4>
+  <form method="post" action="{% url 'agregar_reseña' producto.id %}" class="form-reseña" id="formReseña">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="calificacion" class="form-label">Calificación</label>
+      <select name="calificacion" id="calificacion" class="form-select" required>
+        <option value="" selected disabled>Selecciona una opción</option>
+        {% for i in "12345" %}
+          <option value="{{ i }}">{{ i }} estrella{% if i != "1" %}s{% endif %}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="mb-3">
+      <label for="comentario" class="form-label">Su comentario</label>
+      <textarea name="comentario" id="comentario" rows="3" class="form-control"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Enviar reseña</button>
+  </form>
+{% else %}
+  <p><a href="{% url 'login' %}">Inicia sesión</a> para dejar una reseña.</p>
+{% endif %}
+
+
+<script>
+  $(document).ready(function () {
+    $("#formReseña").validate({
+      rules: {
+        calificacion: {
+          required: true
+        },
+        comentario: {
+          required: true,
+          minlength: 10
+        }
+      },
+      messages: {
+        calificacion: {
+          required: "Debe seleccionar una calificación"
+        },
+        comentario: {
+          required: "Debe escribir un comentario",
+          minlength: "El comentario debe tener al menos 10 caracteres"
+        }
+      },
+      errorClass: "text-danger",
+      errorElement: "small",
+      highlight: function (element) {
+        $(element).addClass("is-invalid");
+      },
+      unhighlight: function (element) {
+        $(element).removeClass("is-invalid");
+      }
+    });
+  });
+</script>
+
+{% endblock %}
+

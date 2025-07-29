@@ -1,0 +1,136 @@
+{% extends 'layouts/baseAdmin.html' %}
+
+{% block title %}Editar Producto{% endblock %}
+
+{% block content %}
+<h2>Editar producto</h2>
+
+<form method="POST" action="{% url 'detalle_productoEd' producto.id %}" enctype="multipart/form-data" id="formProductoEdit">
+    {% csrf_token %}
+
+    <div class="mb-3">
+        <label for="nombre" class="form-label">Nombre</label>
+        <input type="text" name="nombre" id="nombre" class="form-control" value="{{ producto.nombre }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label for="descripcion" class="form-label">Descripción</label>
+        <textarea name="descripcion" id="descripcion" class="form-control" rows="3" required>{{ producto.descripcion }}</textarea>
+    </div>
+
+    <div class="mb-3">
+        <label for="precio" class="form-label">Precio</label>
+        <input type="number" name="precio" id="precio" class="form-control" step="0.01" value="{{ producto.precio }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label for="stock" class="form-label">Stock</label>
+        <input type="number" name="stock" id="stock" class="form-control" value="{{ producto.stock }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Imagen actual</label><br>
+        {% if producto.imagen %}
+            <img src="{{ producto.imagen.url }}" alt="Imagen actual" style="max-height: 120px;">
+        {% else %}
+            <p>No hay imagen</p>
+        {% endif %}
+    </div>
+
+    <div class="mb-3">
+        <label for="imagen" class="form-label">Cambiar imagen</label>
+        <input type="file" name="imagen" id="imagen" class="form-control">
+    </div>
+
+    <div class="mb-3">
+        <label for="categoria" class="form-label">Categoría</label>
+        <select name="categoria" id="categoria" class="form-control" required>
+            {% for cat in categorias %}
+                <option value="{{ cat.id }}" {% if cat.id == producto.categoria.id %}selected{% endif %}>{{ cat.nombre }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+    <a href="{% url 'admin_productos' %}" class="btn btn-secondary">Cancelar</a>
+</form>
+
+
+
+
+
+
+
+<script>
+    $(document).ready(function() {
+        $("#formProductoEdit").validate({
+        rules: {
+            nombre: {
+            required: true,
+            minlength: 3
+            },
+            descripcion: {
+            required: true,
+            minlength: 10
+            },
+            precio: {
+            required: true,
+            number: true,
+            min: 0
+            },
+            stock: {
+            required: true,
+            digits: true,
+            min: 0
+            },
+
+            categoria: {
+            required: true
+            }
+        },
+        messages: {
+            nombre: {
+            required: "El nombre es obligatorio",
+            minlength: "El nombre debe tener al menos 3 caracteres"
+            },
+            descripcion: {
+            required: "La descripción es obligatoria",
+            minlength: "La descripción debe tener al menos 10 caracteres"
+            },
+            precio: {
+            required: "El precio es obligatorio",
+            number: "Ingrese un número válido",
+            min: "El precio no puede ser negativo"
+            },
+            stock: {
+            required: "El stock es obligatorio",
+            digits: "Ingrese un número entero válido",
+            min: "El stock no puede ser negativo"
+            },
+
+            categoria: {
+            required: "Debe seleccionar una categoría"
+            }
+        },
+        errorClass: "text-danger",
+        errorElement: "small"
+        });
+    });
+</script>
+
+
+<script>
+$(document).ready(function () {
+    $("#imagen").fileinput({
+        language: "es",
+        showUpload: false,
+        showRemove: true,
+        dropZoneEnabled: true,
+        browseLabel: "Buscar imagen",
+        allowedFileExtensions: ["jpg", "jpeg", "png", "gif"],
+    });
+});
+</script>
+
+
+{% endblock %}

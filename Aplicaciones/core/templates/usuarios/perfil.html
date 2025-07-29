@@ -1,0 +1,106 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Mi Perfil{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Historial de Compras</h2>
+
+{% if pagos %}
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th># Pedido</th>
+        <th>Monto</th>
+        <th>Método de Pago</th>
+        <th>Estado</th>
+        <th>Fecha</th>
+        <th>Detalle</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for pago in pagos %}
+        <tr>
+            <td>{{ pago.pedido.id }}</td>
+            <td>${{ pago.monto|floatformat:2 }}</td>
+            <td>{{ pago.get_metodo_pago_display }}</td>
+            <td>{{ pago.get_estado_pago_display }}</td>
+            <td>{{ pago.fecha_pago|date:"d/m/Y H:i" }}</td>
+            <td>
+            <button class="btn btn-outline-primary btn-sm ver-detalle" data-pedido-id="{{ pago.pedido.id }}" data-bs-toggle="modal" data-bs-target="#detalleModal">
+                <i class="fas fa-eye"></i>
+            </button>
+            </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p>No has realizado pagos todavía.</p>
+{% endif %}
+
+
+
+
+
+<!-- Modal -->
+<div class="modal fade" id="detalleModal" tabindex="-1" aria-labelledby="detalleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Detalles del Pedido</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body" id="contenido-detalle">
+        <p>Cargando productos...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const botones = document.querySelectorAll('.ver-detalle');
+
+  botones.forEach(boton => {
+    boton.addEventListener('click', () => {
+      const pedidoId = boton.getAttribute('data-pedido-id');
+      const contenedor = document.getElementById('contenido-detalle');
+
+      contenedor.innerHTML = '<p>Cargando productos...</p>';
+
+    fetch(`/usuarios/perfil/detalle-pedido/${pedidoId}/`)
+
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'ok') {
+            const productosHTML = data.productos.map(p => `
+              <div class="d-flex align-items-center mb-3">
+                <img src="${p.imagen}" alt="${p.nombre}" width="80" height="80" class="me-3 border rounded">
+                <div>
+                  <h6 class="mb-0">${p.nombre}</h6>
+                  <small class="text-muted">Precio: $${p.precio_unitario}</small>
+                </div>
+              </div>
+            `).join('');
+
+            contenedor.innerHTML = productosHTML || '<p>No se encontraron productos.</p>';
+          } else {
+            contenedor.innerHTML = `<p class="text-danger">${data.error}</p>`;
+          }
+        })
+        .catch(error => {
+          contenedor.innerHTML = `<p class="text-danger">Error cargando productos.</p>`;
+          console.error(error);
+        });
+    });
+  });
+});
+</script>
+
+
+
+
+
+
+{% endblock %}

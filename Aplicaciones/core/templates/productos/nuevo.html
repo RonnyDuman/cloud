@@ -1,0 +1,127 @@
+{% extends 'layouts/baseAdmin.html' %}
+
+{% block title %}Nuevo Producto{% endblock %}
+
+{% block content %}
+<h2>Crear nuevo producto</h2>
+
+<form method="POST" enctype="multipart/form-data" id="formProducto">
+    {% csrf_token %}
+    
+    <div class="mb-3">
+        <label for="nombre" class="form-label">Nombre</label>
+        <input type="text" name="nombre" id="nombre" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+        <label for="descripcion" class="form-label">Descripción</label>
+        <textarea name="descripcion" id="descripcion" class="form-control" rows="3" required></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label for="precio" class="form-label">Precio</label>
+        <input type="number" name="precio" id="precio" class="form-control" step="0.01" required>
+    </div>
+
+    <div class="mb-3">
+        <label for="stock" class="form-label">Stock</label>
+        <input type="number" name="stock" id="stock" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+        <label for="imagen" class="form-label">Imagen del producto</label>
+        <input type="file" name="imagen" id="imagen" class="form-control">
+    </div>
+
+    <div class="mb-3">
+        <label for="categoria" class="form-label">Categoría</label>
+        <select name="categoria" id="categoria" class="form-control" required>
+            {% for categoria in categorias %}
+                <option value="{{ categoria.id }}">{{ categoria.nombre }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-success">Guardar</button>
+    <a href="{% url 'admin_inicio' %}" class="btn btn-secondary">Cancelar</a>
+</form>
+
+<script>
+    $(document).ready(function() {
+        $("#formProducto").validate({
+        rules: {
+            nombre: {
+            required: true,
+            minlength: 3
+            },
+            descripcion: {
+            required: true,
+            minlength: 10
+            },
+            precio: {
+            required: true,
+            number: true,
+            min: 0
+            },
+            stock: {
+            required: true,
+            digits: true,
+            min: 0
+            },
+            imagen: {
+            required: true,
+            extension: "jpg|jpeg|png|gif"
+            },
+            categoria: {
+            required: true
+            }
+        },
+        messages: {
+            nombre: {
+            required: "El nombre es obligatorio",
+            minlength: "El nombre debe tener al menos 3 caracteres"
+            },
+            descripcion: {
+            required: "La descripción es obligatoria",
+            minlength: "La descripción debe tener al menos 10 caracteres"
+            },
+            precio: {
+            required: "El precio es obligatorio",
+            number: "Ingrese un número válido",
+            min: "El precio no puede ser negativo"
+            },
+            stock: {
+            required: "El stock es obligatorio",
+            digits: "Ingrese un número entero válido",
+            min: "El stock no puede ser negativo"
+            },
+            imagen: {
+            required: "La imagen es obligatorio",
+            extension: "Solo se permiten imágenes (jpg, jpeg, png, gif)"
+            },
+            categoria: {
+            required: "Debe seleccionar una categoría"
+            }
+        },
+        errorClass: "text-danger",
+        errorElement: "small"
+        });
+    });
+</script>
+
+
+<script>
+$(document).ready(function () {
+    $("#imagen").fileinput({
+        language: "es",
+        showUpload: false,
+        showRemove: true,
+        dropZoneEnabled: true,
+        browseLabel: "Buscar imagen",
+        allowedFileExtensions: ["jpg", "jpeg", "png", "gif"],
+
+    });
+});
+</script>
+
+{% endblock %}

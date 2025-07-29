@@ -1,0 +1,57 @@
+{% extends 'layouts/base.html' %}
+{% load descuentos_extras %}
+
+{% block title %}Ofertas{% endblock %}
+
+{% block content %}
+
+
+<style>
+  .scale {
+    scale: 1;
+    transition: scale 0.5s ease, box-shadow 0.7s ease;
+    box-shadow: 0 0 10px 0 transparent;
+    border-radius: 10px;
+  }
+
+  .scale:hover {
+    scale: 1.03;
+    box-shadow: 0 0 20px 0 black;
+  }
+</style>
+
+<h2 class="mb-4">Productos con Descuento</h2>
+
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    {% for producto in productos %}
+    <div class="col scale">
+        <div class="card h-100 shadow-sm">
+            {% if producto.imagen %}
+                <img src="{{ producto.imagen.url }}" class="card-img-top" alt="{{ producto.nombre }}">
+            {% else %}
+                <img src="https://via.placeholder.com/300x300?text=Sin+imagen" class="card-img-top" alt="Sin imagen">
+            {% endif %}
+
+            <div class="card-body text-center">
+                <h5 class="card-title">{{ producto.nombre }}</h5>
+
+                {% with descuentos|dictkey:producto.id as desc %}
+                    <p class="text-muted mb-0"><del>${{ producto.precio }}</del></p>
+                    <p class="text-danger fw-bold">
+                        ${{ producto.precio|floatval|descontar:desc.porcentaje_descuento|floatformat:2 }}
+                        <span class="badge bg-success">{{ desc.porcentaje_descuento|floatformat:0 }}% Desc.</span>
+                    </p>
+                {% endwith %}
+            </div>
+            <div class="card-footer text-center">
+                <a href="{% url 'detalle_producto' producto.id %}" class="btn btn-sm btn-outline-primary">
+                    <i class="fa-solid fa-eye"></i> Ver producto
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+        <p>No hay productos con descuento actualmente.</p>
+    {% endfor %}
+</div>
+{% endblock %}

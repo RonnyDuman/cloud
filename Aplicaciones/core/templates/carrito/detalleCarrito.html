@@ -1,0 +1,143 @@
+{% extends 'layouts/base.html' %}
+{% load descuentos_extras custom_filters %}
+
+
+
+{% block title %}Carrito{% endblock %}
+
+{% block content %}
+
+<h2 class="mb-4">Carrito de compras</h2>
+
+{% if items_db or carrito %}
+<section class="table-responsive">
+  <table class="table table-bordered align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Producto</th>
+        <th>Precio</th>
+        <th>Unidades</th>
+        <th>Total</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+
+    {# Carrito de usuarios registrados #}
+    {% if items_db %}
+      {% for item in items_db %}
+      <tr>
+        <td>
+          <div class="d-flex align-items-center">
+            {% if item.producto.imagen %}
+              <img src="{{ item.producto.imagen.url }}" class="me-2" width="80" alt="{{ item.producto.nombre }}">
+            {% else %}
+              <img src="https://via.placeholder.com/80x80?text=Sin+imagen" class="me-2" width="80" alt="{{ item.producto.nombre }}">
+            {% endif %}
+            <strong>{{ item.producto.nombre }}</strong>
+          </div>
+        </td>
+        <td>
+          {% if item.porcentaje_descuento|default:0 > 0 %}
+            <del>${{ item.precio_original|floatformat:2 }}</del><br>
+            <span class="text-danger">
+              ${{ item.precio_unitario|floatformat:2 }}
+              ({{ item.porcentaje_descuento }}% Desc.)
+            </span>
+          {% else %}
+            ${{ item.precio_unitario|floatformat:2 }}
+          {% endif %}
+
+        </td>
+        <td>{{ item.cantidad }}</td>
+        <td>${{ item.subtotal|floatformat:2 }}</td>
+        <td>
+          <form method="post" action="{% url 'eliminar_del_carrito_db' item.id %}">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-danger" title="Eliminar"><i class="fa fa-trash"></i></button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    {% endif %}
+
+    {# Carrito de usuarios anónimos #}
+   {% if carrito %}
+  {% for key, item in carrito.items %}
+  <tr>
+    <td>
+      <div class="d-flex align-items-center">
+        {% if item.imagen %}
+          <img src="{{ item.imagen }}" class="me-2" width="80" alt="{{ item.nombre }}">
+        {% else %}
+          <img src="https://via.placeholder.com/80x80?text=Sin+imagen" class="me-2" width="80" alt="{{ item.nombre }}">
+        {% endif %}
+        <strong>{{ item.nombre }}</strong>
+      </div>
+    </td>
+
+    <td>
+      {% if item.porcentaje_descuento > 0 %}
+        <del>${{ item.precio|floatformat:2 }}</del><br>
+        <span class="text-danger">
+          ${{ item.precio_descuento|floatformat:2 }} 
+          ({{ item.porcentaje_descuento }}% Desc.)
+        </span>
+      {% else %}
+        ${{ item.precio|floatformat:2 }}
+      {% endif %}
+    </td>
+
+    <td>{{ item.cantidad }}</td>
+
+
+    <td>${{ item.total|floatformat:2 }}</td>
+
+
+    <td>
+      <form method="post" action="{% url 'eliminar_del_carrito' key %}">
+        {% csrf_token %}
+        <button class="btn btn-sm btn-danger" title="Eliminar"><i class="fa fa-trash"></i></button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+{% endif %}
+
+    </tbody>
+  </table>
+</section>
+
+<div class="d-flex justify-content-between align-items-center mt-4">
+  <a href="/" class="btn btn-outline-primary">Seguir comprando</a>
+  <form method="post" action="{% url 'vaciar_carrito' %}">
+    {% csrf_token %}
+    <button class="btn btn-outline-danger">Vaciar carrito</button>
+  </form>
+</div>
+
+<hr class="my-4">
+<div class="d-flex justify-content-between align-items-center">
+  <div>
+    <h4>Resumen</h4>
+    <ul class="list-unstyled mb-0">
+      <li>Subtotal: <strong>${{ subtotal|floatformat:2 }}</strong></li>
+      <li>Total: <strong>${{ total|floatformat:2 }}</strong></li>
+    </ul>
+  </div>
+
+  <div>
+    <form method="post" action="{% url 'realizar_compra' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-success">Realizar compra</button>
+    </form>
+
+  </div>
+</div>
+
+
+{% else %}
+<p>Tu carrito está vacío. <a href="/">Seguir comprando</a></p>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,8 @@
+<h2>Simulación de pago con PayPal</h2>
+<p>Monto a pagar: <strong>${{ pago.monto }}</strong></p>
+
+<form method="post">
+  {% csrf_token %}
+  <button type="submit" class="btn btn-success">Pagar ahora</button>
+</form>
+

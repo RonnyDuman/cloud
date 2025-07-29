@@ -1,0 +1,379 @@
+{% extends 'layouts/baseAdmin.html' %} 
+{% block title %}Gestión de Categorías{%endblock %} 
+
+{% block content %}
+<h3>Gestion de Categorias</h3>
+<!-- Botón para abrir modal -->
+<div>
+  <button
+    type="button"
+    class="btn btn-primary"
+    data-bs-toggle="modal"
+    data-bs-target="#modalCrearCategoria"
+  >
+    Agregar Categoría
+  </button>
+</div>
+
+<div
+  class="modal fade"
+  id="modalCrearCategoria"
+  tabindex="-1"
+  aria-labelledby="modalCrearCategoriaLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formCrearCategoria">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalCrearCategoriaLabel">
+            Nueva Categoría
+          </h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Cerrar"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <input
+            type="text"
+            id="nombreCategoria"
+            class="form-control"
+            placeholder="Nombre de la categoría"
+            required
+          />
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div
+  class="modal fade"
+  id="modalEditar"
+  tabindex="-1"
+  aria-labelledby="modalEditarLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalEditarLabel">Editar Categoría</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Cerrar"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="idEditarCategoria" name="idEditarCategoria" />
+        <label for="nombreEditarCategoria" class="form-label">Nombre:</label>
+        <input
+          type="text"
+          id="nombreEditarCategoria"
+          name="nombreEditarCategoria"
+          class="form-control"
+          required
+        />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          onclick="guardarEdicion()"
+        >
+          Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<table
+  border="1"
+  class="table table-bordered table-striped"
+  width="100%"
+  id="tablaCategorias">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Nombre</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for categoria in categorias %}
+    <tr>
+      <td>{{ categoria.id }}</td>
+      <td>{{ categoria.nombre }}</td>
+      <td>
+        <button
+          onclick="abrirModalEditar('{{ categoria.id }}')"
+          class="btn btn-warning btn-sm"
+        >
+          Editar
+        </button>
+        <button
+          onclick="eliminarCategoria('{{ categoria.id }}')"
+          class="btn btn-danger btn-sm"
+        >
+          Eliminar
+        </button>
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="3">No hay categorías registradas.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<script>
+  document
+    .getElementById("formCrearCategoria")
+    .addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const nombre = document.getElementById("nombreCategoria").value.trim();
+      if (!nombre) {
+        alert("Por favor, ingresa un nombre válido.");
+        return;
+      }
+
+      try {
+        const response = await fetch("/categorias/api/categorias/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken"), 
+          },
+          body: JSON.stringify({ nombre: nombre }),
+        });
+
+        if (response.ok) {
+          alert("Categoría creada con éxito");
+          location.reload();
+        } else {
+          const data = await response.json();
+          alert("Error: " + (data.error || "No se pudo crear la categoría"));
+        }
+      } catch (error) {
+        alert("Error en la petición: " + error);
+      }
+    });
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.startsWith(name + "=")) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+</script>
+
+<script>
+  function eliminarCategoria(id) {
+    Swal.fire({
+      title: "¿Estás seguro?",
+      text: "No podrás revertir esto.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const response = await fetch(`/categorias/api/categorias/${id}/`, {
+            method: "DELETE",
+            headers: {
+              "X-CSRFToken": getCookie("csrftoken"),
+            },
+          });
+          const data = await response.json();
+
+          if (response.ok) {
+            Swal.fire(
+              "Eliminado!",
+              data.message || "Categoría eliminada.",
+              "success"
+            );
+            location.reload();
+          } else {
+            Swal.fire(
+              "Error",
+              data.error || "No se pudo eliminar la categoría.",
+              "error"
+            );
+          }
+        } catch (error) {
+          Swal.fire("Error", "No se pudo conectar con el servidor.", "error");
+        }
+      }
+    });
+  }
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.startsWith(name + "=")) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+</script>
+
+<script>
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.startsWith(name + "=")) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+</script>
+
+<script>
+  function abrirModalEditar(id) {
+    document.getElementById("idEditarCategoria").value = id;
+
+    fetch(`/categorias/api/categorias/${id}/`)
+      .then((res) => res.json())
+      .then((data) => {
+        document.getElementById("nombreEditarCategoria").value = data.nombre;
+
+        var modal = new bootstrap.Modal(document.getElementById("modalEditar"));
+        modal.show();
+      })
+      .catch((err) => {
+        alert("Error al cargar datos de la categoría");
+      });
+  }
+
+  function cerrarModal() {
+    document.getElementById("modalEditar").style.display = "none";
+  }
+
+  async function guardarEdicion() {
+    const id = document.getElementById("idEditarCategoria").value;
+    const nombre = document
+      .getElementById("nombreEditarCategoria")
+      .value.trim();
+
+    if (!nombre) {
+      alert("El nombre no puede estar vacío");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/categorias/api/categorias/${id}/`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: JSON.stringify({ nombre }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert("Categoría actualizada");
+        cerrarModal();
+        location.reload(); 
+      } else {
+        alert("Error: " + (data.error || "No se pudo actualizar"));
+      }
+    } catch (error) {
+      alert("Error en la petición: " + error);
+    }
+  }
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.startsWith(name + "=")) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+</script>
+
+
+
+<script>
+$(document).ready(function() {
+  $('#tablaCategorias').DataTable({
+    language: {
+      url: 'https://cdn.datatables.net/plug-ins/2.3.1/i18n/es-ES.json'
+    },
+    dom: 'Bfrtip', // Botones arriba de la tabla
+    buttons: [
+      {
+        extend: 'copy',
+        text: 'Copiar'
+      },
+      {
+        extend: 'excel',
+        text: 'Excel'
+      },
+      {
+        extend: 'pdf',
+        text: 'PDF'
+      },
+      {
+        extend: 'print',
+        text: 'Imprimir'
+      }
+    ]
+  });
+});
+</script>
+
+
+
+
+
+{% endblock %}
